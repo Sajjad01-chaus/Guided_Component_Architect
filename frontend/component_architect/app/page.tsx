@@ -8,17 +8,30 @@ export default function Home() {
   const [loading, setLoading] = useState(false)
 
   const generate = async () => {
-    setLoading(true)
+    try {
+      setLoading(true)
 
-    const res = await fetch('http://localhost:8000/generate', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ prompt })
-    })
+      const res = await fetch(
+        process.env.NEXT_PUBLIC_API_URL + '/generate',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ prompt })
+        }
+      )
 
-    const data = await res.json()
-    setResult(data)
-    setLoading(false)
+      if (!res.ok) {
+        throw new Error('API request failed')
+      }
+
+      const data = await res.json()
+      setResult(data)
+    } catch (err) {
+      console.error(err)
+      alert('Something went wrong.')
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
