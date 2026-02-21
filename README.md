@@ -8,9 +8,11 @@ The system implements structured LLM output validation, automated self-correctio
 
 This project demonstrates how to build production-style AI workflows beyond simple prompt → response pipelines.
 
+🔗 Live Demo (Frontend – Vercel): https://guided-component-architect-khaki.vercel.app
+
 ---
 
-## Architecture
+## Architecture 
 
 The system uses a **LangGraph state machine** with the following flow:
 
@@ -19,7 +21,7 @@ User Prompt
 ↓
 Injection Guard
 ↓
-Context Manager (Multi-turn memory)
+Context Manager (Memory)
 ↓
 Generator Agent (Structured JSON output)
 ↓
@@ -29,113 +31,150 @@ TypeScript Structural Validation
 ↓
 Design Token Validation
 ↓
-Self-Correction Agent (if needed)
+Critic Agent (if errors detected)
 ↓
-Export + Preview
+Retry Loop (bounded)
+↓
+Final Output + Live Preview
+
+This ensures deterministic, governed, and recoverable generation.
 
 
 ---
 
 ## Key Features
 
-### 1. Agentic Workflow
+### 1. Agentic Orchestration
 
-Implemented using **LangGraph** with conditional retry routing.
+Implemented using LangGraph with conditional routing and bounded retries.
 
----
+The system behaves like an AI workflow engine — not a single LLM call.
 
 ### 2. Structured Output Enforcement
 
 The LLM must return JSON strictly matching:
-
-```json
+```
 {
   "typescript": "...",
   "html": "...",
   "css": "..."
 }
 ```
+Validated using Pydantic schema validation.
 
-The structure is validated using Pydantic schema validation.
+Malformed outputs automatically trigger correction.
 
-3. Design System Governance
+### 3. Design System Governance
 
-All generated components must adhere strictly to:
+All generated components must strictly adhere to predefined design tokens defined in design_system.json.
 
-Approved color tokens
+Enforced constraints include:
 
-Defined border radius
+Approved primary color
 
-Defined font family
+Approved border radius
 
-Unauthorized tokens automatically trigger correction.
+Approved font family
 
-4. TypeScript Structural Validation
+Unauthorized tokens trigger automatic correction via the Critic node.
 
-Generated TypeScript is validated to ensure:
+### 4. TypeScript Structural Validation
+
+Generated TypeScript is programmatically validated to ensure:
 
 Presence of @Component decorator
 
 Presence of export class
 
-Proper import statements
+Valid import statements
 
 Balanced brackets
 
-This prevents structurally invalid Angular components.
+This prevents invalid Angular scaffolding.
 
-5. Self-Healing Correction Loop
+### 5. Self-Healing Correction Loop
 
-If validation fails:
+If any validation fails:
 
 Errors are collected
 
-Error logs are fed back into the LLM
+Error logs are injected into a Critic prompt
 
-The component is automatically corrected
+The LLM repairs only the failing component
 
-Retries are limited and controlled
+Retry count is bounded via configuration
 
-6. Multi-Turn Editing
+This creates a controlled, deterministic repair mechanism.
 
-The system retains previous component state in memory, enabling iterative refinement such as:
+### 6. Multi-Turn Editing
 
-"Now make the button rounded"
+The system maintains component state in memory, enabling iterative refinement:
 
-7. Prompt Injection Protection
+Example:
 
-A dedicated guard layer blocks malicious instructions such as:
+“Create a login card”
 
-"Ignore previous instructions"
+“Now make the button rounded”
 
-"Delete design system"
+“Change primary color to use design token”
 
-"Bypass validation"
+The context node merges prior state with new intent.
 
-This ensures governed and secure generation.
+### 7. Prompt Injection Protection
 
-8. Visualization
+A guard node filters malicious instructions such as:
 
-A lightweight Flask preview server renders generated HTML + CSS for quick inspection.
+“Ignore previous instructions”
 
-## Installation
+“Bypass validation”
+
+“Delete the design system”
+
+This prevents LLM-level override of governance rules.
+
+### 8. Production Deployment
+
+Backend:
+
+FastAPI deployed on Render
+
+Public production endpoint
+
+Frontend:
+
+Next.js deployed on Vercel
+
+Environment variable-based backend integration
+
+Live preview rendering of generated HTML + CSS
+
+Installation (Local Development)
+
+Install dependencies:
+```
 pip install -r requirements.txt
-
-Create a .env file in the project root:
-
+```
+Create .env file:
+```
 GROQ_API_KEY=your_api_key_here
-Usage
-Run Component Generator
-python main.py
-Run Preview Server
-python preview_server.py
+```
+Run backend locally:
+```
+uvicorn api:app --reload
+```
+Run frontend:
+```
+cd frontend/component_architect
+npm install
+npm run dev
+```
+## Tech Stack
 
-Open in browser:
-
-http://localhost:5000
-Tech Stack
+Backend:
 
 Python
+
+FastAPI
 
 LangGraph
 
@@ -143,24 +182,49 @@ LangChain (Groq integration)
 
 Pydantic
 
-Flask
+Regex-based token validation
 
-Regex-based Design Token Validation
+Frontend:
 
-Structured LLM Output Contracts
+Next.js (App Router)
+
+Tailwind CSS
+
+Environment-based API configuration
+
+## Deployment:
+
+Render (Backend)
+
+Vercel (Frontend)
+
+Engineering Design Decisions
+
+Structured JSON contracts prevent uncontrolled generation.
+
+Validation layers are separated from generation logic.
+
+Retry loops are bounded to prevent infinite repair cycles.
+
+Design tokens are externalized into JSON for governance.
+
+Provider abstraction allows model swapping without refactoring orchestration.
 
 ## Future Improvements
 
-Angular CLI integration for live compile validation
+Angular CLI compile validation
 
 ESLint integration
 
 Full-page layout planning agent
 
-Component composition system
+Component composition graph
 
-Provider abstraction layer (Groq/OpenAI interchangeable)
+Persistent vector memory
 
+Provider abstraction layer (OpenAI / Groq interchangeable)
+
+CI-based automatic validation checks
 Persistent memory storage
 
 CI-style linting integration
