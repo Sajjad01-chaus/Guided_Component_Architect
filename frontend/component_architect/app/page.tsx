@@ -41,7 +41,7 @@ export default function Home() {
       </h1>
 
       <textarea
-        className="w-full p-3 text-black rounded"
+        className="w-full p-3 bg-white text-black rounded border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500"
         rows={4}
         value={prompt}
         onChange={(e) => setPrompt(e.target.value)}
